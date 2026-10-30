@@ -1,0 +1,194 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+    content="width=device-width,initial-scale=1,
+    viewport-fit=cover">
+  <meta name="theme-color" content="#0b1220">
+  <meta name="apple-mobile-web-app-capable"
+    content="yes">
+  <meta name="apple-mobile-web-app-title"
+    content="ISS PDA">
+  <title>ISS Field PDA</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header>
+    <div>
+      <small>COMMERCIAL SALES COMMAND</small>
+      <h1>ISS FIELD PDA</h1>
+    </div>
+    <span id="connection">LOCAL</span>
+  </header>
+
+  <main>
+    <section id="dashboard" class="page active">
+      <h2>Sales Dashboard</h2>
+      <p class="muted" id="monthLabel"></p>
+
+      <div class="card">
+        <small>MONTHLY PERSONAL SALES</small>
+        <h1 id="totalSales">$0.00</h1>
+        <div class="progress">
+          <div id="goalBar"></div>
+        </div>
+        <p id="goalText">$0 of $40,000</p>
+      </div>
+
+      <div class="grid">
+        <div class="card">
+          <small>COMMERCIAL</small>
+          <h2 id="commercialSales">$0</h2>
+        </div>
+        <div class="card">
+          <small>RETAIL</small>
+          <h2 id="retailSales">$0</h2>
+        </div>
+        <div class="card">
+          <small>GROSS PROFIT</small>
+          <h2 id="grossProfit">—</h2>
+        </div>
+        <div class="card">
+          <small>ACTIVE ACCOUNTS</small>
+          <h2 id="accountCount">0</h2>
+        </div>
+      </div>
+
+      <button id="quickSale" class="primary">
+        + Record New Sale
+      </button>
+    </section>
+
+    <section id="accounts" class="page">
+      <h2>Customer Accounts</h2>
+      <button id="newAccount" class="primary">
+        + New Commercial Account
+      </button>
+      <div id="accountList"></div>
+    </section>
+
+    <section id="sales" class="page">
+      <h2>Sales Ledger</h2>
+      <button id="newSale" class="primary">
+        + Record Sale
+      </button>
+      <div id="salesList"></div>
+    </section>
+
+    <section id="tasks" class="page">
+      <h2>Follow-Ups</h2>
+      <button id="newTask" class="primary">
+        + New Task
+      </button>
+      <div id="taskList"></div>
+    </section>
+
+    <section id="settings" class="page">
+      <h2>Settings</h2>
+      <label for="monthlyGoal">Monthly sales goal</label>
+      <input id="monthlyGoal"
+        type="number" value="40000" min="1">
+      <button id="saveSettings" class="primary">
+        Save Settings
+      </button>
+      <button id="exportData">
+        Export Backup
+      </button>
+      <button id="importData">
+        Restore Backup
+      </button>
+      <input id="backupFile" type="file"
+        accept="application/json" hidden>
+      <p class="muted">
+        Records are stored locally on this device.
+        Export backups regularly.
+      </p>
+    </section>
+  </main>
+
+  <dialog id="saleDialog">
+    <form id="saleForm">
+      <h2>Record Sale</h2>
+      <label for="saleType">Sales Type</label>
+      <select id="saleType">
+        <option value="commercial">Commercial</option>
+        <option value="retail">Retail</option>
+      </select>
+
+      <label for="saleCustomer">Customer</label>
+      <select id="saleCustomer"></select>
+
+      <label for="saleAmount">Sale Amount ($)</label>
+      <input id="saleAmount" type="number"
+        step="0.01" min="0.01" required>
+
+      <label for="saleCost">Cost ($, optional)</label>
+      <input id="saleCost" type="number"
+        step="0.01" min="0">
+
+      <label for="saleNotes">Description</label>
+      <input id="saleNotes" type="text"
+        placeholder="Brake pads, alternator...">
+
+      <button type="submit" class="primary">
+        Save Sale
+      </button>
+      <button type="button" id="cancelSale">
+        Cancel
+      </button>
+    </form>
+  </dialog>
+
+  <dialog id="accountDialog">
+    <form id="accountForm">
+      <h2>New Commercial Account</h2>
+      <label for="businessName">Business Name</label>
+      <input id="businessName" required>
+
+      <label for="contactName">Contact Person</label>
+      <input id="contactName">
+
+      <label for="phone">Phone</label>
+      <input id="phone" type="tel">
+
+      <label for="accountNotes">Notes</label>
+      <textarea id="accountNotes"></textarea>
+
+      <button type="submit" class="primary">
+        Save Customer
+      </button>
+      <button type="button" id="cancelAccount">
+        Cancel
+      </button>
+    </form>
+  </dialog>
+
+  <dialog id="taskDialog">
+    <form id="taskForm">
+      <h2>New Follow-Up</h2>
+      <label for="taskTitle">Task</label>
+      <input id="taskTitle" required>
+      <label for="taskDate">Due Date</label>
+      <input id="taskDate" type="date" required>
+      <button type="submit" class="primary">
+        Save Task
+      </button>
+      <button type="button" id="cancelTask">
+        Cancel
+      </button>
+    </form>
+  </dialog>
+
+  <nav>
+    <button data-page="dashboard">Home</button>
+    <button data-page="accounts">Accounts</button>
+    <button data-page="sales">Sales</button>
+    <button data-page="tasks">Tasks</button>
+    <button data-page="settings">More</button>
+  </nav>
+</body>
+</html>
