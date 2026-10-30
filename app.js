@@ -792,3 +792,26 @@
   render();
 
 })();
+
+
+/* Register offline service worker */
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      .register("./sw.js")
+      .then(registration => {
+        console.log(
+          "ISS PDA offline worker registered:",
+          registration.scope
+        );
+      })
+      .catch(error => {
+        console.error(
+          "ISS PDA offline worker failed:",
+          error
+        );
+      });
+  });
+}
+
