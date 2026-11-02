@@ -1,0 +1,617 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#111827">
+<title>ISS PDA | Shop Prospects</title>
+
+<style>
+:root {
+  --bg:#0b111b;
+  --panel:#172131;
+  --border:#304052;
+  --text:#f4f6fa;
+  --muted:#a9b5c6;
+  --green:#22c55e;
+  --yellow:#eab308;
+}
+* {box-sizing:border-box}
+body {
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:system-ui,Arial,sans-serif;
+}
+header {
+  position:sticky;
+  top:0;
+  z-index:2;
+  padding:16px;
+  background:#101a29;
+  border-bottom:1px solid var(--border);
+}
+h1 {font-size:23px;margin:4px 0}
+h2 {font-size:17px}
+small,.muted {color:var(--muted)}
+main {padding:12px;max-width:850px;margin:auto}
+.stats {
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+  margin:14px 0;
+}
+.stat,.shop {
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:13px;
+}
+.stat {text-align:center}
+.stat strong {display:block;font-size:24px}
+.stat small {font-size:11px}
+input,select,textarea,button {
+  font:inherit;
+  border-radius:9px;
+  padding:11px;
+}
+input,select,textarea {
+  background:#0f1928;
+  color:white;
+  border:1px solid var(--border);
+  width:100%;
+}
+button {
+  background:#28394d;
+  color:white;
+  border:1px solid var(--border);
+  cursor:pointer;
+}
+button.primary {
+  background:var(--green);
+  color:#07140c;
+  font-weight:bold;
+}
+.controls {display:grid;gap:8px}
+.filters {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+.shop {margin-bottom:10px}
+.shop h2 {margin:0 0 5px}
+.tags {
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  margin:10px 0;
+}
+.tag {
+  background:#304052;
+  border-radius:20px;
+  font-size:11px;
+  padding:5px 9px;
+}
+.high {color:#facc15}
+.active {color:#4ade80}
+.actions {
+  display:flex;
+  gap:7px;
+  flex-wrap:wrap;
+}
+.actions button,.actions a {
+  display:inline-block;
+  text-decoration:none;
+  background:#28394d;
+  color:white;
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:9px;
+  font-size:13px;
+}
+.notes {
+  white-space:pre-wrap;
+  overflow-wrap:anywhere;
+}
+dialog {
+  width:min(94vw,520px);
+  max-height:90vh;
+  overflow:auto;
+  color:white;
+  background:#172131;
+  border:1px solid #53657b;
+  border-radius:14px;
+}
+dialog::backdrop {background:#000b}
+label {
+  display:block;
+  margin:13px 0;
+  font-size:13px;
+}
+label input,label select,label textarea {
+  margin-top:5px;
+}
+textarea {min-height:90px}
+.dialog-actions {display:flex;gap:8px}
+.dialog-actions button {flex:1}
+footer {
+  display:flex;
+  gap:8px;
+  padding:15px;
+  flex-wrap:wrap;
+}
+footer button {flex:1}
+a {color:#6ee7b7}
+</style>
+</head>
+
+<body>
+
+<header>
+  <small>ISS PDA / COMMERCIAL SALES</small>
+  <h1>Shop Prospects</h1>
+  <small>North Everett • 41st Street and north</small>
+
+  <div class="stats">
+    <div class="stat">
+      <strong id="total">0</strong>
+      <small>Shops</small>
+    </div>
+    <div class="stat">
+      <strong id="visited">0</strong>
+      <small>Contacted</small>
+    </div>
+    <div class="stat">
+      <strong id="active">0</strong>
+      <small>Accounts</small>
+    </div>
+  </div>
+
+  <div class="controls">
+    <input id="search"
+      placeholder="Search shop, street, notes...">
+
+    <div class="filters">
+      <select id="typeFilter">
+        <option value="">All categories</option>
+        <option>General Repair</option>
+        <option>Specialty / Fleet</option>
+        <option>Tires / Quick Service</option>
+        <option>Collision / Body</option>
+      </select>
+
+      <select id="statusFilter">
+        <option value="">All statuses</option>
+        <option>Not Contacted</option>
+        <option>Visited</option>
+        <option>Follow Up</option>
+        <option>Active Account</option>
+        <option>Not Interested</option>
+      </select>
+    </div>
+
+    <button class="primary" onclick="editShop()">
+      + Add Shop
+    </button>
+  </div>
+</header>
+
+<main>
+  <h2>
+    North Everett Directory
+    <small id="shown"></small>
+  </h2>
+
+  <div id="shopList"></div>
+
+  <small>
+    Prospect locations require field verification.
+    Information is stored locally on this device.
+  </small>
+</main>
+
+<footer>
+  <button onclick="exportCSV()">Export CSV</button>
+  <button onclick="backup()">Backup JSON</button>
+  <button onclick="document.getElementById('restore').click()">
+    Restore
+  </button>
+  <input hidden type="file" id="restore" accept=".json">
+</footer>
+
+<dialog id="editor">
+  <form id="shopForm">
+    <h2>Edit Prospect</h2>
+
+    <input id="shopId" type="hidden">
+
+    <label>Shop Name
+      <input id="shopName" required>
+    </label>
+
+    <label>Address
+      <input id="shopAddress">
+    </label>
+
+    <label>Category
+      <select id="shopType">
+        <option>General Repair</option>
+        <option>Specialty / Fleet</option>
+        <option>Tires / Quick Service</option>
+        <option>Collision / Body</option>
+      </select>
+    </label>
+
+    <label>Priority
+      <select id="shopPriority">
+        <option>High</option>
+        <option>Medium</option>
+        <option>Low</option>
+      </select>
+    </label>
+
+    <label>Status
+      <select id="shopStatus">
+        <option>Not Contacted</option>
+        <option>Visited</option>
+        <option>Follow Up</option>
+        <option>Active Account</option>
+        <option>Not Interested</option>
+      </select>
+    </label>
+
+    <label>Decision Maker
+      <input id="shopContact">
+    </label>
+
+    <label>Phone Number
+      <input type="tel" id="shopPhone">
+    </label>
+
+    <label>Follow-up Date
+      <input type="date" id="shopFollow">
+    </label>
+
+    <label>Sales Notes
+      <textarea id="shopNotes"></textarea>
+    </label>
+
+    <div class="dialog-actions">
+      <button type="button" onclick="editor.close()">
+        Cancel
+      </button>
+      <button type="submit" class="primary">
+        Save
+      </button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+"use strict";
+
+// NORTH EVERETT SHOP DIRECTORY
+
+const data = [
+["Jim Startup's Foreign Car Repair","3821 Railway Ave","General Repair","High"],
+["AB Service Center","2923 Rucker Ave","General Repair","High"],
+["Prestige Auto Service","1702 Broadway","General Repair","High"],
+["Everett Auto Service","1919 Everett Ave","General Repair","High"],
+["ONB Automotive Repair","3002 Grand Ave","General Repair","High"],
+["AAMCO Transmissions & Total Car Care","2801 Rucker Ave","Specialty / Fleet","High"],
+["AA Transmission and Auto","1202 Chestnut St","Specialty / Fleet","High"],
+["Everett Tire & Automotive","2828 Hoyt Ave","General Repair","High"],
+["Z Sport Euro","3829 Broadway","General Repair","High"],
+["Z Sport Automotive","3532 Smith Ave","General Repair","High"],
+["Auto Truck Service","3921 Smith Ave","Specialty / Fleet","High"],
+["Everett Auto Clinic","3132 Rucker Ave","General Repair","High"],
+["Wardell Automotive","2813 W Marine View Dr","General Repair","High"],
+["Aroo Automotive","2929 Rucker Ave","General Repair","High"],
+["1st Choice Transmission & Auto Repair","2718 Broadway","Specialty / Fleet","High"],
+["Bucky's Complete Auto Repair","1701 Everett Ave","General Repair","High"],
+["Northwest Subie Specialists","2118 Everett Ave","General Repair","High"],
+["C & E Auto Clinic / One Stop Best Auto","1832 Lombard Ave","General Repair","Medium"],
+["Drivelines Northwest","3116 Hill Ave","Specialty / Fleet","High"],
+["Eastside Truck & Auto Shop","3228 McDougall Ave","Specialty / Fleet","High"],
+["AP Auto & Repair","2420 38th St","General Repair","Medium"],
+["G & H Auto Electric","2115 California St","Specialty / Fleet","Medium"],
+["Enriquez Tires","2917 Broadway","Tires / Quick Service","Medium"],
+["JTires & Brakes","2128 Broadway","Tires / Quick Service","Medium"],
+["Les Schwab Tire Center","2701 Walnut St","Tires / Quick Service","Low"],
+["Jiffy Lube","3601 Broadway","Tires / Quick Service","Low"],
+["Pro Muffler & Brakes","2129 Wall St","Specialty / Fleet","Medium"],
+["A&A Auto Body","2129 Wall St","Collision / Body","Medium"],
+["H&A Auto Body","2120 Pacific Ave","Collision / Body","Medium"],
+["Ace Collision Repair","2006 Broadway","Collision / Body","Medium"],
+["Bayside Paintworks","2929 Bond St","Collision / Body","Medium"],
+["Narrow Way Refinish & Collision","2110 25th St","Collision / Body","Medium"],
+["Hanson Auto Rebuild / Matt's Auto Body","2006 Broadway","Collision / Body","Medium"]
+];
+
+// LOCAL STORAGE DATABASE
+
+const KEY = "iss-pda-shop-prospects-v1";
+const $ = id => document.getElementById(id);
+
+const initial = data.map((s,i) => ({
+  id:"seed-"+i,
+  name:s[0],
+  address:s[1]+", Everett, WA",
+  type:s[2],
+  priority:s[3],
+  status:"Not Contacted",
+  contact:"",
+  phone:"",
+  follow:"",
+  notes:""
+}));
+
+let shops;
+
+try {
+  const stored = JSON.parse(localStorage.getItem(KEY));
+  shops = Array.isArray(stored) ? stored : initial;
+} catch {
+  shops = initial;
+}
+
+function save() {
+  localStorage.setItem(KEY,JSON.stringify(shops));
+}
+
+function safe(s) {
+  return String(s ?? "").replace(/[&<>"']/g,c=>({
+    "&":"&amp;",
+    "<":"&lt;",
+    ">":"&gt;",
+    '"':"&quot;",
+    "'":"&#39;"
+  })[c]);
+}
+
+// DISPLAY SHOPS
+
+function render() {
+  const q = $("search").value.toLowerCase();
+  const type = $("typeFilter").value;
+  const status = $("statusFilter").value;
+
+  const matches = shops.filter(s =>
+    [s.name,s.address,s.contact,s.notes]
+      .join(" ")
+      .toLowerCase()
+      .includes(q) &&
+    (!type || s.type===type) &&
+    (!status || s.status===status)
+  );
+
+  matches.sort((a,b) =>
+    ["High","Medium","Low"].indexOf(a.priority) -
+    ["High","Medium","Low"].indexOf(b.priority)
+    || a.name.localeCompare(b.name)
+  );
+
+  $("total").textContent = shops.length;
+
+  $("visited").textContent = shops.filter(s =>
+    ["Visited","Follow Up","Active Account"]
+      .includes(s.status)
+  ).length;
+
+  $("active").textContent = shops.filter(s =>
+    s.status==="Active Account"
+  ).length;
+
+  $("shown").textContent = `(${matches.length})`;
+
+  $("shopList").innerHTML = matches.map(s=>`
+    <section class="shop">
+      <h2>${safe(s.name)}</h2>
+      <small>${safe(s.address)}</small>
+
+      <div class="tags">
+        <span class="tag ${s.priority==="High"?"high":""}">
+          ${safe(s.priority)} Priority
+        </span>
+        <span class="tag">${safe(s.type)}</span>
+        <span class="tag ${s.status==="Active Account"?"active":""}">
+          ${safe(s.status)}
+        </span>
+      </div>
+
+      ${s.contact ?
+        `<p>Contact: ${safe(s.contact)}</p>` : ""}
+
+      ${s.follow ?
+        `<p>Follow up: ${safe(s.follow)}</p>` : ""}
+
+      ${s.notes ?
+        `<p class="notes">${safe(s.notes)}</p>` : ""}
+
+      <div class="actions">
+        <button data-edit="${safe(s.id)}">
+          Edit
+        </button>
+
+        <button data-visit="${safe(s.id)}">
+          Mark Visited
+        </button>
+
+        <a target="_blank" rel="noopener"
+           href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.address)}">
+          Directions
+        </a>
+
+        ${s.phone ?
+          `<a href="tel:${encodeURIComponent(s.phone)}">Call</a>`
+          : ""}
+      </div>
+    </section>
+  `).join("") || "<p>No matching shops.</p>";
+}
+
+// SHOP BUTTONS
+
+$("shopList").addEventListener("click", e => {
+  const edit = e.target.closest("[data-edit]");
+  const visit = e.target.closest("[data-visit]");
+
+  if(edit) editShop(edit.dataset.edit);
+
+  if(visit) {
+    const s = shops.find(x=>x.id===visit.dataset.visit);
+    if(s) {
+      s.status="Visited";
+      save();
+      render();
+    }
+  }
+});
+
+// EDIT / ADD SHOP
+
+function editShop(id) {
+  $("shopForm").reset();
+
+  const s=shops.find(x=>x.id===id);
+
+  $("shopId").value=s?.id || "";
+  $("shopName").value=s?.name || "";
+  $("shopAddress").value=s?.address || "";
+  $("shopType").value=s?.type || "General Repair";
+  $("shopPriority").value=s?.priority || "High";
+  $("shopStatus").value=s?.status || "Not Contacted";
+  $("shopContact").value=s?.contact || "";
+  $("shopPhone").value=s?.phone || "";
+  $("shopFollow").value=s?.follow || "";
+  $("shopNotes").value=s?.notes || "";
+
+  $("editor").showModal();
+}
+
+$("shopForm").addEventListener("submit",e=>{
+  e.preventDefault();
+
+  const id=$("shopId").value || "custom-"+Date.now();
+
+  const s={
+    id,
+    name:$("shopName").value.trim(),
+    address:$("shopAddress").value.trim(),
+    type:$("shopType").value,
+    priority:$("shopPriority").value,
+    status:$("shopStatus").value,
+    contact:$("shopContact").value.trim(),
+    phone:$("shopPhone").value.trim(),
+    follow:$("shopFollow").value,
+    notes:$("shopNotes").value.trim()
+  };
+
+  if(!s.name)return;
+
+  const i=shops.findIndex(x=>x.id===id);
+
+  if(i===-1) shops.push(s);
+  else shops[i]=s;
+
+  save();
+  render();
+  $("editor").close();
+});
+
+// SEARCH AND FILTERS
+
+["search","typeFilter","statusFilter"].forEach(id=>
+  $(id).addEventListener("input",render)
+);
+
+// FILE EXPORT
+
+function download(name,content,type) {
+  const url=URL.createObjectURL(
+    new Blob([content],{type})
+  );
+
+  const a=document.createElement("a");
+  a.href=url;
+  a.download=name;
+  document.body.append(a);
+  a.click();
+  a.remove();
+
+  setTimeout(()=>URL.revokeObjectURL(url),2000);
+}
+
+function exportCSV() {
+  const cols=[
+    "name","address","type","priority",
+    "status","contact","phone","follow","notes"
+  ];
+
+  const quote=v=>
+    '"'+String(v??"").replaceAll('"','""')+'"';
+
+  const rows=[
+    cols.join(","),
+    ...shops.map(s=>
+      cols.map(k=>quote(s[k])).join(",")
+    )
+  ];
+
+  download(
+    "iss-shop-prospects.csv",
+    rows.join("\r\n"),
+    "text/csv"
+  );
+}
+
+// BACKUP
+
+function backup() {
+  download(
+    "iss-shops-backup.json",
+    JSON.stringify(shops,null,2),
+    "application/json"
+  );
+}
+
+// RESTORE BACKUP
+
+$("restore").addEventListener("change",async e=>{
+  const file=e.target.files?.[0];
+  if(!file)return;
+
+  try {
+    const parsed=JSON.parse(await file.text());
+
+    if(
+      !Array.isArray(parsed) ||
+      !parsed.every(s=>
+        s &&
+        typeof s.id==="string" &&
+        typeof s.name==="string"
+      )
+    ) {
+      throw new Error("Invalid backup");
+    }
+
+    if(confirm("Replace the current shop list?")) {
+      shops=parsed;
+      save();
+      render();
+    }
+  } catch {
+    alert("Unable to restore this backup.");
+  }
+
+  e.target.value="";
+});
+
+// START APPLICATION
+
+render();
+
+</script>
+</body>
+</html>
